@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 530 140" width="100%" height="100%">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&amp;display=swap');
+      .brand-text {
+        font-family: 'Segoe UI', Montserrat, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+        font-weight: 700;
+        font-size: 58px;
+        fill: #D6192A;
+        letter-spacing: -0.5px;
+      }
+      .ticket-text {
+        font-family: Arial, -apple-system, BlinkMacSystemFont, sans-serif;
+        font-weight: 800;
+        font-size: 48px;
+        fill: #FFFFFF;
+      }
+    </style>
+  </defs>
+
+  <!-- Tilted Ticket Group -->
+  <g transform="rotate(-12, 60, 70)">
+    <path d="M 15 28 L 24 20 L 33 28 L 42 20 L 51 28 L 60 20 L 69 28 L 78 20 L 87 28 L 96 20 L 105 28 L 105 120 L 76 120 A 16 16 0 0 0 44 120 L 15 120 Z" fill="#D6192A" />
+    <text x="60" y="84" text-anchor="middle" class="ticket-text">my</text>
+  </g>
+
+  <!-- Logo Text -->
+  <text x="130" y="88" class="brand-text">BookMyEvent</text>
+</svg>
