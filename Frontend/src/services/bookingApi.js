@@ -1,8 +1,7 @@
-import axios from "axios";
+import API from "../api/axios";
 
-const apiBaseUrl =
-  process.env.REACT_APP_AUTH_API_URL?.replace(/\/auth\/?$/, "") ||
-  "http://localhost:5000/api";
+const rawApiUrl = (process.env.REACT_APP_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+const apiBaseUrl = rawApiUrl.endsWith("/api") ? rawApiUrl : `${rawApiUrl}/api`;
 
 /**
  * Create a new movie booking with seat locking and payment confirmation
@@ -19,8 +18,8 @@ export const createBooking = async ({
   paymentMethod = "UPI_QR",
   token,
 }) => {
-  const { data } = await axios.post(
-    `${apiBaseUrl}/bookings`,
+  const { data } = await API.post(
+    "/api/bookings",
     {
       movieTitle,
       seats,
@@ -41,7 +40,7 @@ export const createBooking = async ({
  * Validate coupon code and get calculated discount
  */
 export const applyCouponApi = async ({ code, totalAmount }) => {
-  const { data } = await axios.post(`${apiBaseUrl}/coupons/apply`, {
+  const { data } = await API.post("/api/coupons/apply", {
     code,
     totalAmount,
   });
@@ -52,7 +51,7 @@ export const applyCouponApi = async ({ code, totalAmount }) => {
  * Fetch real-time booked seats for a particular show from the database
  */
 export const getBookedSeatsApi = async ({ movieTitle, showDate, showTime, cinemaName }) => {
-  const { data } = await axios.get(`${apiBaseUrl}/bookings/booked-seats`, {
+  const { data } = await API.get("/api/bookings/booked-seats", {
     params: { movieTitle, showDate, showTime, cinemaName },
   });
   return data;

@@ -1,5 +1,9 @@
-const configuredBaseUrl =
-  process.env.REACT_APP_ADMIN_API_URL || "http://localhost:5000/api";
+const rawBaseUrl = (
+  process.env.REACT_APP_API_URL ||
+  process.env.REACT_APP_ADMIN_API_URL ||
+  "http://localhost:5000"
+).replace(/\/+$/, "");
+const configuredBaseUrl = rawBaseUrl.endsWith("/api") ? rawBaseUrl : `${rawBaseUrl}/api`;
 
 export class AdminApiError extends Error {
   constructor(message, status) {

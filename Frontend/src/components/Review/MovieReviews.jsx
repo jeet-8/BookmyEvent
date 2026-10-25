@@ -8,9 +8,8 @@ import {
 } from "react-icons/fa";
 import axios from "axios";
 
-const apiBaseUrl =
-  process.env.REACT_APP_AUTH_API_URL?.replace(/\/auth\/?$/, "") ||
-  "http://localhost:5000/api";
+const rawApiUrl = (process.env.REACT_APP_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+const apiBaseUrl = rawApiUrl.endsWith("/api") ? rawApiUrl : `${rawApiUrl}/api`;
 
 const ratingLabels = {
   1: "Disappointing",
