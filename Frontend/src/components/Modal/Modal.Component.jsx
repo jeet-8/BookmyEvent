@@ -30,6 +30,7 @@ const CustomModal = () => {
   const navigate = useNavigate();
 
   const closeModal = () => {
+    window.__isAuthModalOpen = false;
     setIsOpen(false);
     setIsRegisterMode(false);
     setAuthError("");
@@ -43,6 +44,7 @@ const CustomModal = () => {
   };
 
   const openModal = () => {
+    window.__isAuthModalOpen = true;
     setIsOpen(true);
     setIsRegisterMode(false);
     setIsOtpSent(false);
@@ -52,6 +54,7 @@ const CustomModal = () => {
     localStorage.removeItem("user");
     setSignedInUser(null);
     setIsDropdownOpen(false);
+    window.dispatchEvent(new CustomEvent("bookmyevent:user-changed", { detail: null }));
     navigate("/");
   };
 
@@ -154,8 +157,12 @@ const CustomModal = () => {
 
       localStorage.setItem("user", JSON.stringify(userObject));
       setSignedInUser(userObject);
+      window.dispatchEvent(new CustomEvent("bookmyevent:user-signed-in", { detail: userObject }));
+      window.dispatchEvent(new CustomEvent("bookmyevent:user-changed", { detail: userObject }));
       closeModal();
-      navigate("/");
+      if (window.location.pathname.startsWith("/admin")) {
+        navigate("/admin");
+      }
     } catch (error) {
       setAuthError(
         error.response?.data?.message ||
@@ -194,6 +201,40 @@ const CustomModal = () => {
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Listen for programmatic auth trigger (e.g. from checkout or reviews)
+  useEffect(() => {
+    const handleOpenAuth = () => {
+      if (window.__isAuthModalOpen) return;
+      window.__isAuthModalOpen = true;
+      setIsOpen(true);
+      setIsRegisterMode(false);
+      setIsOtpSent(false);
+      setAuthError("");
+      setAuthMessage("");
+    };
+
+    const handleUserChanged = (e) => {
+      if (e.detail) {
+        setSignedInUser(e.detail);
+      } else {
+        try {
+          setSignedInUser(JSON.parse(localStorage.getItem("user") || "null"));
+        } catch {
+          setSignedInUser(null);
+        }
+      }
+    };
+
+    window.addEventListener("bookmyevent:open-auth", handleOpenAuth);
+    window.addEventListener("bookmyevent:user-signed-in", handleUserChanged);
+    window.addEventListener("bookmyevent:user-changed", handleUserChanged);
+    return () => {
+      window.removeEventListener("bookmyevent:open-auth", handleOpenAuth);
+      window.removeEventListener("bookmyevent:user-signed-in", handleUserChanged);
+      window.removeEventListener("bookmyevent:user-changed", handleUserChanged);
+    };
   }, []);
 
   return (
@@ -235,7 +276,7 @@ const CustomModal = () => {
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog
           as="div"
-          className="fixed inset-0 z-10 overflow-y-auto"
+          className="fixed inset-0 z-[70] overflow-y-auto"
           onClose={closeModal}
         >
           <div className="min-h-screen flex items-center justify-center">

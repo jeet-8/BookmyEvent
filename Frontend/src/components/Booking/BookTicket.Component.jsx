@@ -6,7 +6,6 @@ import {
   FaDownload,
   FaMapMarkerAlt,
   FaQrcode,
-  FaShieldAlt,
   FaTag,
   FaTimes,
 } from "react-icons/fa";
@@ -58,7 +57,6 @@ export const BookTicketModal = ({ isOpen, onClose, movie }) => {
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [dbBookedSeats, setDbBookedSeats] = useState([]);
   const [step, setStep] = useState("shows"); // "shows" | "seats" | "payment" | "qr_payment" | "confirmation"
-  const [paymentMethod, setPaymentMethod] = useState("UPI");
   const [bookingId, setBookingId] = useState("");
   const [bookingError, setBookingError] = useState("");
   const [isCreatingBooking, setIsCreatingBooking] = useState(false);
@@ -157,6 +155,49 @@ export const BookTicketModal = ({ isOpen, onClose, movie }) => {
     );
   };
 
+  // Check if current user is logged in
+  const isUserAuthenticated = () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "null");
+      return Boolean(user && user.token);
+    } catch {
+      return false;
+    }
+  };
+
+  // Continue to Checkout with Authentication Check
+  const handleContinueToCheckout = () => {
+    setBookingError("");
+
+    if (!selectedSeats.length) return;
+
+    // Check if user is authenticated
+    if (!isUserAuthenticated()) {
+      setBookingError(
+        "Please sign in to proceed to checkout. Your selected seats are saved!"
+      );
+      // Trigger/open the Auth/Login Modal
+      window.dispatchEvent(new CustomEvent("bookmyevent:open-auth"));
+      return;
+    }
+
+    // Proceed directly to the UPI payment modal as normal
+    setStep("payment");
+  };
+
+  // Advance automatically if user signs in while waiting on seat selection
+  useEffect(() => {
+    const handleUserSignedIn = () => {
+      setBookingError("");
+      if (step === "seats" && selectedSeats.length > 0) {
+        setStep("payment");
+      }
+    };
+
+    window.addEventListener("bookmyevent:user-signed-in", handleUserSignedIn);
+    return () => window.removeEventListener("bookmyevent:user-signed-in", handleUserSignedIn);
+  }, [step, selectedSeats.length]);
+
   // Apply Coupon Handler
   const handleApplyCoupon = async (e) => {
     if (e) e.preventDefault();
@@ -230,7 +271,7 @@ export const BookTicketModal = ({ isOpen, onClose, movie }) => {
         },
         totalPrice: finalPayableAmount,
         couponCode: appliedCoupon?.code || null,
-        paymentMethod: paymentMethod === "UPI" ? "UPI_QR" : "Card",
+        paymentMethod: "UPI_QR",
         token: user.token,
       });
 
@@ -650,6 +691,19 @@ export const BookTicketModal = ({ isOpen, onClose, movie }) => {
                         </span>
                       </div>
 
+                      {bookingError && (
+                        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex flex-wrap items-center justify-between gap-2">
+                          <span>{bookingError}</span>
+                          <button
+                            type="button"
+                            onClick={() => window.dispatchEvent(new CustomEvent("bookmyevent:open-auth"))}
+                            className="rounded-lg bg-red-600 px-3 py-1 font-bold text-white hover:bg-red-700 transition"
+                          >
+                            Sign In
+                          </button>
+                        </div>
+                      )}
+
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <p className="text-sm font-semibold text-gray-800">
                           {selectedSeats.length
@@ -661,10 +715,7 @@ export const BookTicketModal = ({ isOpen, onClose, movie }) => {
                         <button
                           type="button"
                           disabled={!selectedSeats.length}
-                          onClick={() => {
-                            setBookingError("");
-                            setStep("payment");
-                          }}
+                          onClick={handleContinueToCheckout}
                           className="w-full rounded-xl bg-red-600 px-6 py-2.5 font-bold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-300 sm:w-auto transition"
                         >
                           Continue to Checkout
@@ -776,47 +827,28 @@ export const BookTicketModal = ({ isOpen, onClose, movie }) => {
                         </div>
                       </div>
 
-                      {/* Payment Method Selector */}
-                      <fieldset>
-                        <legend className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-600">
-                          Choose Payment Method
-                        </legend>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setPaymentMethod("UPI")}
-                            className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${
-                              paymentMethod === "UPI"
-                                ? "border-red-600 bg-red-50 text-red-700 ring-2 ring-red-100"
-                                : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                            }`}
-                          >
-                            <FaQrcode className="text-2xl text-red-600 shrink-0" />
-                            <div>
-                              <p className="font-bold text-xs">UPI QR Code</p>
-                              <span className="text-[11px] text-gray-500">
-                                Instant scan & pay with any UPI app
+                      {/* Payment Method - UPI QR Only */}
+                      <div>
+                        <p className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-600">
+                          Payment Method
+                        </p>
+                        <div className="flex items-center gap-3.5 rounded-xl border border-red-200 bg-red-50/70 p-3.5 shadow-2xs">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-red-600 text-white shrink-0 shadow-xs">
+                            <FaQrcode className="text-xl" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="font-bold text-xs text-gray-900">UPI QR Code Payment</p>
+                              <span className="rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                                Instant
                               </span>
                             </div>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setPaymentMethod("Card")}
-                            className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${
-                              paymentMethod === "Card"
-                                ? "border-red-600 bg-red-50 text-red-700 ring-2 ring-red-100"
-                                : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                            }`}
-                          >
-                            <FaShieldAlt className="text-2xl text-gray-400 shrink-0" />
-                            <div>
-                              <p className="font-bold text-xs">Card Payment</p>
-                              <span className="text-[11px] text-gray-500">Credit or debit card</span>
-                            </div>
-                          </button>
+                            <p className="text-[11px] text-gray-600 mt-0.5">
+                              Scan and pay instantly using Google Pay, PhonePe, Paytm, BHIM, or any UPI app.
+                            </p>
+                          </div>
                         </div>
-                      </fieldset>
+                      </div>
 
                       {bookingError && (
                         <p role="alert" className="text-xs text-red-600 font-semibold">
