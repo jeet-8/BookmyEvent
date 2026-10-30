@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { FaPlay } from "react-icons/fa";
 
 // HOC
@@ -12,6 +13,7 @@ import { getCurrentUser } from "../services/authApi";
 import { getMovieGenres, getMovies } from "../services/movieApi";
 
 const HomePage = () => {
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [authError, setAuthError] = useState("");
   const [recommendedMovies, setRecommendedMovies] = useState([]);
@@ -153,15 +155,17 @@ const HomePage = () => {
   }, []);
 
   useEffect(() => {
-    if (window.location.hash) {
-      const target = document.querySelector(window.location.hash);
+    const hash = location.hash || window.location.hash;
+    if (hash) {
+      const target = document.querySelector(hash);
       if (target) {
-        setTimeout(() => {
+        const timer = setTimeout(() => {
           target.scrollIntoView({ behavior: "smooth" });
         }, 150);
+        return () => clearTimeout(timer);
       }
     }
-  }, [movies]);
+  }, [location.hash, movies]);
 
   return (
     <>
@@ -172,7 +176,8 @@ const HomePage = () => {
         </p>
       )}
       <HeroCarousel movies={movies} />
-      <div id="movies" className="container mx-auto px-4 md:px-12 my-8 scroll-mt-6">
+      <div id="recommended" className="container mx-auto px-4 md:px-12 my-8 scroll-mt-24">
+        <span id="movies" aria-hidden="true" />
         <LazyPosterSlider
           title="Recommended Movies"
           subtitle="List of Recommended Movies"
@@ -181,7 +186,7 @@ const HomePage = () => {
           isLoading={isMoviesLoading}
         />
       </div>
-      <div className="container mx-auto px-4 md:px-12 my-8">
+      <div id="latest" className="container mx-auto px-4 md:px-12 my-8 scroll-mt-24">
         <LazyPosterSlider
           title="Latest Movies"
           subtitle="Recent Indian releases across all languages"
@@ -190,7 +195,7 @@ const HomePage = () => {
           isLoading={isMoviesLoading}
         />
       </div>
-      <div className="container mx-auto px-4 md:px-12 my-8">
+      <div id="hindi" className="container mx-auto px-4 md:px-12 my-8 scroll-mt-24">
         <LazyPosterSlider
           title="Hindi Movies"
           subtitle="Latest Hindi movies"
@@ -200,21 +205,21 @@ const HomePage = () => {
           maxItems={8}
         />
       </div>
-      <div className="container mx-auto px-4 md:px-12 my-8">
+      <div id="english" className="container mx-auto px-4 md:px-12 my-8 scroll-mt-24">
         <LazyPosterSlider
-          title="Gujarati Movies"
-          subtitle="Latest Gujarati movies"
-          posters={gujaratiMovies}
+          title="English Movies"
+          subtitle="Latest English movies"
+          posters={englishMovies}
           isDark={false}
           isLoading={isMoviesLoading}
           maxItems={8}
         />
       </div>
-      <div className="container mx-auto px-4 md:px-12 my-8">
+      <div id="gujarati" className="container mx-auto px-4 md:px-12 my-8 scroll-mt-24">
         <LazyPosterSlider
-          title="English Movies"
-          subtitle="Latest English movies"
-          posters={englishMovies}
+          title="Gujarati Movies"
+          subtitle="Latest Gujarati movies"
+          posters={gujaratiMovies}
           isDark={false}
           isLoading={isMoviesLoading}
           maxItems={8}

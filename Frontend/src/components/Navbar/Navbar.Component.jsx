@@ -1,6 +1,6 @@
 import { BiChevronDown, BiMenu, BiSearch, BiX } from "react-icons/bi";
 import { FaMapMarkerAlt } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import CustomModal from "../Modal/Modal.Component";
 import CitySelectorModal from "../Modal/CitySelectorModal.Component";
 import FeedbackModal from "../Modal/FeedbackModal";
@@ -182,8 +182,19 @@ function NavLg({ location, isLoading, onOpenCityModal, onRetry, onOpenFeedback }
   );
 }
 
+// Category Navigation Links
+const CATEGORIES = [
+  { id: "recommended", label: "Recommended Movies" },
+  { id: "latest", label: "Latest Movies" },
+  { id: "hindi", label: "Hindi Movies" },
+  { id: "english", label: "English Movies" },
+  { id: "gujarati", label: "Gujarati Movies" },
+];
+
 // Main NavBar Component
 const Navbar = () => {
+  const navigate = useNavigate();
+  const routerLocation = useLocation();
   const [location, setLocation] = useState(
     () => localStorage.getItem("preferredLocation") || ""
   );
@@ -191,6 +202,20 @@ const Navbar = () => {
   const [isCityModalOpen, setIsCityModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const initialRequestStarted = useRef(false);
+
+  const handleCategoryClick = (id) => {
+    if (routerLocation.pathname === "/") {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+        if (window.history.pushState) {
+          window.history.pushState(null, "", `#${id}`);
+        }
+        return;
+      }
+    }
+    navigate(`/#${id}`);
+  };
 
   const handleCitySelect = (newCity) => {
     setLocation(newCity);
@@ -290,6 +315,20 @@ const Navbar = () => {
           />
         </div>
       </nav>
+
+      {/* Secondary Category Navigation Bar */}
+      <div className="bg-gray-50 border-t border-b text-sm font-medium text-gray-700 flex space-x-6 px-6 py-2 overflow-x-auto whitespace-nowrap">
+        {CATEGORIES.map((category) => (
+          <button
+            key={category.id}
+            type="button"
+            onClick={() => handleCategoryClick(category.id)}
+            className="shrink-0 transition hover:text-red-600 focus:outline-none focus:text-red-600 cursor-pointer"
+          >
+            {category.label}
+          </button>
+        ))}
+      </div>
       <CitySelectorModal
         isOpen={isCityModalOpen}
         onClose={() => setIsCityModalOpen(false)}
